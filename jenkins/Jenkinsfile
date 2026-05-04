@@ -1,62 +1,52 @@
 pipeline {
     agent any
 
-    parameters {
-        string(name: 'TEAM_NAME', defaultValue: 'team-a', description: 'Enter team name (team-a / team-b)')
-    }
-
     environment {
-        DOCKER_HUB = "rajbhimani18"
+        DOCKER_HUB = "rajbhimani18"  
         IMAGE_NAME = "multi-tenant-app"
+        TEAM_NAME  = "team-a"
     }
 
     stages {
 
-        stage('Clone Repo') {
+        stage('Build Docker Image') {
             steps {
-                git "https://github.com/RajBhimani-2003/${params.TEAM_NAME}-repo.git"
+                sh "docker build -t $DOCKER_HUB/$IMAGE_NAME:$BUILD_NUMBER ./app"
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Login to DockerHub') {
             steps {
-                sh """
-                docker build -t $DOCKER_HUB/$IMAGE_NAME:${params.TEAM_NAME}-$BUILD_NUMBER ./app
-                """
+                withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh "echo $PASS | docker login -u $USER --password-stdin"
+                }
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh """
-                    docker login -u $USER -p $PASS
-                    docker push $DOCKER_HUB/$IMAGE_NAME:${params.TEAM_NAME}-$BUILD_NUMBER
-                    """
-                }
+                sh "docker push $DOCKER_HUB/$IMAGE_NAME:$BUILD_NUMBER"
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                script {
-                    sh """
-                    export TEAM_NAME=${params.TEAM_NAME}
-                    export DOCKER_IMAGE=${DOCKER_HUB}/${IMAGE_NAME}:${params.TEAM_NAME}-${BUILD_NUMBER}
+                sh """
+                export TEAM_NAME=${TEAM_NAME}
+                export DOCKER_IMAGE=${DOCKER_HUB}/${IMAGE_NAME}:${BUILD_NUMBER}
 
-                    # Create namespace
-                    envsubst < k8s/namespace.yaml | kubectl apply -f -
+                # Create namespace
+                envsubst < k8s/namespace.yaml | kubectl apply -f -
 
-                    # Apply resource quota
-                    envsubst < k8s/resource-quota.yaml | kubectl apply -f -
+                # Apply resource quota
+                envsubst < k8s/resource-quota.yaml | kubectl apply -f -
 
-                    # Deploy app
-                    envsubst < k8s/deployment.yaml | kubectl apply -f -
+                # Deploy app
+                envsubst < k8s/deployment.yaml | kubectl apply -f -
 
-                    # Apply service
-                    envsubst < k8s/service.yaml | kubectl apply -f -
-                    """
-                }
+                # Apply service
+                kubectl apply -f k8s/service.yaml
+                """
             }
         }
     }
