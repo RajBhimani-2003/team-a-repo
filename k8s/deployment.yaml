@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deployment
+  namespace: {{TEAM_NAME}}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: app
+        image: {{DOCKER_IMAGE}}
+        ports:
+        - containerPort: 5000
+        env:
+        - name: TEAM_NAME
+          value: "{{TEAM_NAME}}"
