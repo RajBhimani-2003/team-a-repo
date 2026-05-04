@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB = "rajbhimani18"  
+        DOCKER_HUB = "rajbhimani18"
         IMAGE_NAME = "multi-tenant-app"
         TEAM_NAME  = "team-a"
     }
@@ -17,7 +17,12 @@ pipeline {
 
         stage('Login to DockerHub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')])
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
+                )]) {
+                    sh "docker login -u $USER -p $PASS"
                 }
             }
         }
