@@ -36,21 +36,21 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh """
-        export TEAM_NAME=${TEAM_NAME}
-        export DOCKER_IMAGE=${DOCKER_HUB}/${IMAGE_NAME}:${BUILD_NUMBER}
+                export TEAM_NAME=${TEAM_NAME}
+                export DOCKER_IMAGE=${DOCKER_HUB}/${IMAGE_NAME}:${BUILD_NUMBER}
 
-        # Create namespace
-        envsubst < k8s/namespace.yaml | kubectl apply -f -
-
-        # Apply resource quota
-        envsubst < k8s/resource-quota.yaml | kubectl apply -f -
-
-        # Deploy app
-        envsubst < k8s/deployment.yaml | kubectl apply -f -
-
-        # Apply service (FIXED)
-        envsubst < k8s/service.yaml | kubectl apply -f -
-        """
+                # Create namespace
+                envsubst < k8s/namespace.yaml | kubectl apply -f -
+        
+                # Apply resource quota
+                envsubst < k8s/resource-quota.yaml | kubectl apply -f -
+        
+                # Deploy app
+                envsubst < k8s/deployment.yaml | kubectl apply -f -
+        
+                # Apply service (FIXED)
+                envsubst < k8s/service.yaml | kubectl apply -f -
+                """
             }
         }
     }
