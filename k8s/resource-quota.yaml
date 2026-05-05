@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: compute-quota
-  namespace: {{TEAM_NAME}}
+  namespace: $TEAM_NAME
 spec:
   hard:
     requests.cpu: "500m"
